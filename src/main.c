@@ -8,11 +8,11 @@
 #include <stdio.h>
 #include "renderer.h"
 
-static const Vertex vertices[3] = {
-    {{-0.6f, -0.4f}, {1.f, 0.f, 0.f}},
-    {{0.6f, -0.4f}, {0.f, 1.f, 0.f}},
-    {{0.f, 0.6f}, {0.f, 0.f, 1.f}},
-};
+#define VIRTUAL_WIDTH_16_9 1280
+#define VIRTUAL_HEIGHT_16_9 720
+
+#define VIRTUAL_WIDTH_21_9 1680
+#define VIRTUAL_HEIGHT_21_9 720
 
 static void error_callback(int error, const char *description)
 {
@@ -23,6 +23,10 @@ static void key_callback(GLFWwindow *window, int key, int scancode, int action, 
 {
     if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
         glfwSetWindowShouldClose(window, GLFW_TRUE);
+}
+static void framebuffer_size_callback(GLFWwindow *window, int width, int height)
+{
+    glViewport(0, 0, width, height);
 }
 
 static Renderer global_renderer = {0};
@@ -38,7 +42,7 @@ int main(void)
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-    GLFWwindow *window = glfwCreateWindow(640, 480, "OpenGL Triangle", NULL, NULL);
+    GLFWwindow *window = glfwCreateWindow(1600, 1080, "OpenGL Triangle", NULL, NULL);
     if (!window)
     {
         glfwTerminate();
@@ -46,6 +50,7 @@ int main(void)
     }
 
     glfwSetKeyCallback(window, key_callback);
+    glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
     glfwMakeContextCurrent(window);
     gladLoadGL();
@@ -53,24 +58,23 @@ int main(void)
 
     Renderer *r = &global_renderer;
     renderer_init(r);
-    // for (size_t i = 0; i < 3; i++)
-    // {
-    //     renderer_push_vertex(r, vertices[i]);
-    // }
-    vec2 min = {-0.5f, -0.5f};
-    vec2 max = {0.5f, 0.5f};
+    vec2 pos = {0.0f, -0.5f};
+    vec2 char_pos = {0.0f, 0.0f};
+    vec2 size = {1.0f, 1.0f};
 
     vec3 blue = {0, 0, 1};
 
-    renderer_push_quad(r, min, max, blue);
+    renderer_push_quad(r, pos, size, blue);
+    Texture character_tex = renderer_load_texture("assets/CharacterIdle.png");
+    renderer_push_sprite(r, character_tex, char_pos);
     while (!glfwWindowShouldClose(window))
     {
         int width, height;
         glfwGetFramebufferSize(window, &width, &height);
-
         glViewport(0, 0, width, height);
-        glClear(GL_COLOR_BUFFER_BIT);
 
+        glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT);
         renderer_draw(r, width, height);
 
         glfwSwapBuffers(window);
